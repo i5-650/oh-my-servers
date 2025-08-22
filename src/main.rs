@@ -1,16 +1,79 @@
-use std::fmt::Write as _;
-use std::result::Result;
-use std::{env::home_dir, error::Error, ffi::OsStr, fs::read_dir, path::PathBuf};
+use anyhow::{Error, Result, anyhow};
+use clap::{Parser, Subcommand};
+use std::{env::home_dir, ffi::OsStr, fs::read_dir, path::PathBuf};
 
+mod commands;
 mod models;
 
 use models::Servers;
 
 const CONF_DIF: &str = ".oh-my-servers";
 
-fn main() -> Result<(), Box<dyn Error>> {
+#[derive(Parser)]
+#[command(
+    author = "i5-650",
+    about = "Oh My Servers - Server management tool",
+    long_about = None
+)]
+pub struct Args {
+    #[command(subcommand)]
+    pub command: Commands,
+}
+
+#[derive(Debug, Subcommand)]
+pub enum Commands {
+    /// Generate shell integration (aliases, completions, etc.)
+    Shell {
+        // #[arg(
+        //     value_name = "shell",
+        //     required = false,
+        //     help = "The shell to generate integration for (bash, zsh, fish, etc.)"
+        // )]
+        // shell: Option<String>,
+    },
+
+    /// List servers
+    Ls,
+
+    /// Describe a server
+    Describe {
+        #[arg(value_name = "server", help = "The name of the server to describe")]
+        server: String,
+    },
+
+    /// Add a new server
+    Add {
+        #[arg(value_name = "todo", help = "todo")]
+        connection: String,
+    },
+
+    /// Remove a server
+    Rm {
+        #[arg(value_name = "server", help = "The name of the server to remove")]
+        server: String,
+    },
+}
+
+fn main() -> Result<(), Error> {
+    let servers = parse_config()?;
+
+    let args = Args::parse();
+
+    match &args.command {
+        Commands::Shell {} => commands::generate_aliases(&servers),
+        Commands::Ls => commands::ls(&servers),
+        Commands::Describe { server } => commands::describe(&servers, server),
+        _ => {
+            println!("Noop");
+        }
+    }
+
+    Ok(())
+}
+
+fn parse_config() -> Result<Servers> {
     let Some(file_path) = find_config_file() else {
-        return Err("Configuration file not found".into());
+        return Err(anyhow!("Configuration file not found"));
     };
 
     let extension = file_path
@@ -24,38 +87,11 @@ fn main() -> Result<(), Box<dyn Error>> {
 
     let content = &std::fs::read_to_string(file_path)?;
 
-    let servers = match extension {
-        Some("json") => serde_json::from_str::<Servers>(content)?,
-        Some("yaml") => serde_yaml::from_str::<Servers>(content)?,
-        _ => return Err("Unsupported file format".into()),
-    };
-
-    let aliases = generate_aliases(&servers);
-
-    println!("{aliases}");
-    Ok(())
-}
-
-fn generate_aliases(servers: &Servers) -> String {
-    let mut aliases = String::new();
-    servers.servers.iter().for_each(|server| {
-        if server.key_path.is_some() {
-            let s_name = &server.name;
-            let s_key = &server.key_path.as_ref().expect("Already checked above");
-            let s_user = &server.user;
-            let s_ip = &server.ip;
-            let _ = writeln!(
-                &mut aliases,
-                "alias {s_name}='ssh {s_user}@{s_ip} -i {s_key}'"
-            );
-        } else {
-            let s_name = &server.name;
-            let s_user = &server.user;
-            let s_ip = &server.ip;
-            let _ = writeln!(&mut aliases, "alias {s_name}='ssh {s_user}@{s_ip}'");
-        }
-    });
-    aliases
+    match extension {
+        Some("json") => Ok(serde_json::from_str::<Servers>(content)?),
+        Some("yaml") => Ok(serde_yaml::from_str::<Servers>(content)?),
+        _ => Err(anyhow!("Unsupported file format")),
+    }
 }
 
 /// Find the configuration file path in the `$HOME/.oh-my-servers`.
