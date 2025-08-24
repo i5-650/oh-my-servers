@@ -1,6 +1,11 @@
 use anyhow::{Error, Result, anyhow};
 use clap::{Parser, Subcommand};
-use std::{env::home_dir, ffi::OsStr, fs::read_dir, path::PathBuf};
+use std::{
+    env::home_dir,
+    ffi::OsStr,
+    fs::read_dir,
+    path::{Path, PathBuf},
+};
 
 mod commands;
 mod models;
@@ -55,7 +60,19 @@ pub enum Commands {
 }
 
 fn main() -> Result<(), Error> {
-    let servers = parse_config()?;
+    let Some(file_path) = find_config_file() else {
+        return Err(anyhow!("Configuration file not found"));
+    };
+
+    let extension = get_extension(&file_path);
+
+    let extension = match extension {
+        Some("json") => "json",
+        Some("yaml") => "yaml",
+        _ => return Err(anyhow!("Unsupported file format")),
+    };
+
+    let mut servers = parse_config(&file_path, extension)?;
 
     let args = Args::parse();
 
@@ -63,33 +80,32 @@ fn main() -> Result<(), Error> {
         Commands::Shell {} => commands::generate_aliases(&servers),
         Commands::Ls => commands::ls(&servers),
         Commands::Describe { server } => commands::describe(&servers, server),
-        _ => {
-            println!("Noop");
+        Commands::Rm { server } => commands::rm(&mut servers, server, file_path, extension)?,
+        Commands::Add { connection } => {
+            println!("Noop: {connection}");
         }
     }
 
     Ok(())
 }
 
-fn parse_config() -> Result<Servers> {
-    let Some(file_path) = find_config_file() else {
-        return Err(anyhow!("Configuration file not found"));
-    };
-
-    let extension = file_path
+fn get_extension(file_path: &Path) -> Option<&str> {
+    file_path
         .extension()
         .and_then(OsStr::to_str)
         .and_then(|ext| match ext {
             "json" => Some("json"),
             "yaml" | "yml" => Some("yaml"),
             _ => None,
-        });
+        })
+}
 
+fn parse_config(file_path: &PathBuf, extension: &str) -> Result<Servers> {
     let content = &std::fs::read_to_string(file_path)?;
 
     match extension {
-        Some("json") => Ok(serde_json::from_str::<Servers>(content)?),
-        Some("yaml") => Ok(serde_yaml::from_str::<Servers>(content)?),
+        "json" => Ok(serde_json::from_str::<Servers>(content)?),
+        "yaml" => Ok(serde_yaml::from_str::<Servers>(content)?),
         _ => Err(anyhow!("Unsupported file format")),
     }
 }
