@@ -3,7 +3,7 @@ use std::fmt::Write as _;
 
 pub fn generate_aliases(servers: &Servers) {
     let mut aliases = String::new();
-    servers.servers.iter().for_each(|server| {
+    servers.actives.iter().for_each(|server| {
         let s_name = &server.name;
         let s_user = &server.user;
         let s_host = &server.host;

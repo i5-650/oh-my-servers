@@ -44,6 +44,6 @@ impl Display for Server {
 #[derive(Debug, Serialize, Deserialize, Clone, PartialEq)]
 #[serde(rename_all = "camelCase")]
 pub struct Servers {
-    pub servers: Vec<Server>,
+    pub actives: Vec<Server>,
     pub inactives: Vec<Server>,
 }

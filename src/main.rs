@@ -53,9 +53,18 @@ pub enum Commands {
     },
 
     /// Remove a server
-    Rm {
+    Delete {
         #[arg(value_name = "server", help = "The name of the server to remove")]
         server: String,
+
+        #[arg(
+            value_name = "permanently",
+            required = false,
+            short = 'p',
+            long = "permanently",
+            help = "Whether to delete permanently the server"
+        )]
+        permanently: bool,
     },
 }
 
@@ -80,7 +89,12 @@ fn main() -> Result<(), Error> {
         Commands::Shell {} => commands::generate_aliases(&servers),
         Commands::Ls => commands::ls(&servers),
         Commands::Describe { server } => commands::describe(&servers, server),
-        Commands::Rm { server } => commands::rm(&mut servers, server, file_path, extension)?,
+        Commands::Delete {
+            server,
+            permanently,
+        } => {
+            commands::delete(&mut servers, *permanently, server, file_path, extension)?;
+        }
         Commands::Add { connection } => {
             println!("Noop: {connection}");
         }
