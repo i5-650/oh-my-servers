@@ -35,7 +35,6 @@ inactives:
 
 To auto create aliases for your servers, add the following line to your `~/.bashrc` or `~/.zshrc` file:
 
-
 ```bash
 eval "$(oh-my-servers shell)"
 ```
