@@ -1,6 +1,8 @@
 use crate::models::Servers;
 
-pub fn describe(servers: &Servers, server: &String) {
+use anyhow::Result;
+
+pub fn describe(servers: &Servers, server: &String) -> Result<()> {
     if server == "all" {
         servers.actives.iter().for_each(|s| println!("{s}"));
     } else {
@@ -11,4 +13,5 @@ pub fn describe(servers: &Servers, server: &String) {
             println!("No such resources");
         }
     }
+    Ok(())
 }

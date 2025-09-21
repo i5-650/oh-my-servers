@@ -1,7 +1,8 @@
 use crate::models::Servers;
+use anyhow::Result;
 use std::fmt::Write as _;
 
-pub fn generate_aliases(servers: &Servers) {
+pub fn generate_aliases(servers: &Servers) -> Result<()> {
     let mut aliases = String::new();
     servers.actives.iter().for_each(|server| {
         let s_name = &server.name;
@@ -19,4 +20,5 @@ pub fn generate_aliases(servers: &Servers) {
         };
     });
     println!("{aliases}");
+    Ok(())
 }

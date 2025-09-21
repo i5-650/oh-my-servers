@@ -10,7 +10,7 @@ use std::{
 mod commands;
 mod models;
 
-use models::Servers;
+use models::{Server, Servers};
 
 const CONF_DIF: &str = ".oh-my-servers";
 
@@ -38,7 +38,16 @@ pub enum Commands {
     },
 
     /// List servers
-    Ls,
+    Ls {
+        #[arg(
+            value_name = "all",
+            required = false,
+            help = "Display inactives (deleted) servers",
+            short = 'a',
+            long = "all"
+        )]
+        all: bool,
+    },
 
     /// Describe a server
     Describe {
@@ -48,8 +57,69 @@ pub enum Commands {
 
     /// Add a new server
     Add {
-        #[arg(value_name = "todo", help = "todo")]
-        connection: String,
+        #[arg(
+            value_name = "name",
+            help = "The name of the server to add",
+            short = 'n',
+            long = "name"
+        )]
+        name: String,
+
+        #[arg(
+            value_name = "host",
+            help = "The host of the server to add",
+            short = 'H',
+            long = "host"
+        )]
+        host: String,
+
+        #[arg(
+            value_name = "port",
+            help = "The port of the server, default is 22",
+            short = 'p',
+            long = "port"
+        )]
+        port: Option<u16>,
+
+        #[arg(
+            value_name = "user",
+            help = "The user to log in the server",
+            short = 'u',
+            long = "user"
+        )]
+        user: String,
+
+        #[arg(
+            value_name = "os",
+            help = "The server operating system",
+            short = 'o',
+            long = "os"
+        )]
+        os: String,
+
+        #[arg(
+            value_name = "description",
+            help = "The description of the server",
+            short = 'd',
+            long = "description"
+        )]
+        description: Option<String>,
+
+        #[arg(
+            value_name = "key",
+            help = "The SSH key to connect to the server",
+            short = 'k',
+            long = "key"
+        )]
+        key_path: Option<String>,
+
+        #[arg(
+            value_name = "password",
+            help = "The password of the user used to connect to the server",
+            short = 'P',
+            long = "password"
+        )]
+        password: Option<String>,
     },
 
     /// Remove a server
@@ -87,20 +157,37 @@ fn main() -> Result<(), Error> {
 
     match &args.command {
         Commands::Shell {} => commands::generate_aliases(&servers),
-        Commands::Ls => commands::ls(&servers),
+        Commands::Ls { all } => commands::ls(&servers, *all),
         Commands::Describe { server } => commands::describe(&servers, server),
         Commands::Delete {
             server,
             permanently,
-        } => {
-            commands::delete(&mut servers, *permanently, server, file_path, extension)?;
-        }
-        Commands::Add { connection } => {
-            println!("Noop: {connection}");
-        }
+        } => commands::delete(&mut servers, *permanently, server, file_path, extension),
+        Commands::Add {
+            name,
+            host,
+            port,
+            user,
+            os,
+            description,
+            key_path,
+            password,
+        } => commands::add(
+            &mut servers,
+            Server::new(
+                name,
+                host,
+                *port,
+                user,
+                os,
+                description.to_owned(),
+                key_path.to_owned(),
+                password.to_owned(),
+            ),
+            extension,
+            file_path,
+        ),
     }
-
-    Ok(())
 }
 
 fn get_extension(file_path: &Path) -> Option<&str> {

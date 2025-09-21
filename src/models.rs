@@ -16,6 +16,31 @@ pub struct Server {
     pub password: Option<String>,
 }
 
+impl Server {
+    #[allow(clippy::too_many_arguments)]
+    pub fn new(
+        name: &String,
+        host: &String,
+        port: Option<u16>,
+        user: &String,
+        os: &String,
+        description: Option<String>,
+        key_path: Option<String>,
+        password: Option<String>,
+    ) -> Self {
+        Self {
+            name: name.to_owned(),
+            host: host.to_owned(),
+            port,
+            user: user.to_owned(),
+            os: os.to_owned(),
+            description: description.unwrap_or("No description".to_string()),
+            key_path,
+            password,
+        }
+    }
+}
+
 impl Display for Server {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         let output = format!(
