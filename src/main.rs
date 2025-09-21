@@ -47,6 +47,15 @@ pub enum Commands {
             long = "all"
         )]
         all: bool,
+
+        #[arg(
+            value_name = "long",
+            required = false,
+            help = "Display long format",
+            short = 'l',
+            long = "long"
+        )]
+        long: bool,
     },
 
     /// Describe a server
@@ -157,7 +166,7 @@ fn main() -> Result<(), Error> {
 
     match &args.command {
         Commands::Shell {} => commands::generate_aliases(&servers),
-        Commands::Ls { all } => commands::ls(&servers, *all),
+        Commands::Ls { all, long } => commands::ls(&servers, *all, *long),
         Commands::Describe { server } => commands::describe(&servers, server),
         Commands::Delete {
             server,
