@@ -9,21 +9,23 @@ on:
 env:
   CARGO_TERM_COLOR: always
   RUST_VERSION_STABLE: 1.90.0
-  CRATE_PATHS: .
 
 jobs:
   build:
-    runs-on: ubuntu-18.04
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout
-        uses: actions/checkout@v2
+        uses: actions/checkout@v5
       - name: Install Rust toolchain
-        uses: actions-rs/toolchain@v1
+        uses: dtolnay/rust-toolchain@master
         with:
           toolchain: ${{ env.RUST_VERSION_STABLE }}
-          profile: minimal
-          override: true
+          components: clippy
+      - name: Cache
+        uses: Swatinem/rust-cache@v2
       - name: Build
-        run: cargo build --all-targets -Dclippy::correctness -Dclippy::complexity -Wclippy::perf -Wclippy::pedantic
+        run: cargo build --all-targets
+      - name: Clippy
+        run: cargo clippy --all-targets -- -Dclippy::correctness -Dclippy::complexity -Wclippy::perf -Wclippy::pedantic
       - name: Test
         run: cargo test

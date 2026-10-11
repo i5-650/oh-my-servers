@@ -4,7 +4,13 @@ Allow you to dynamically generate alias for your servers.
 
 ## Configuration
 
-You have to create a configuration file in `~/.oh-my-servers/config.yaml`.
+You have to create a configuration file in `~/.oh-my-servers/config.yaml` (or `config.json`).
+
+You can use another location by setting the `OMS_CONFIG` environment variable:
+
+```sh
+export OMS_CONFIG=~/somewhere/servers.yaml
+```
 
 ```yaml
 actives:

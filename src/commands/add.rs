@@ -3,6 +3,12 @@ use std::path::PathBuf;
 
 use crate::models::{Server, Servers};
 
+/// Add `new_server` to the active servers and save the configuration to `file_path`.
+///
+/// # Errors
+///
+/// Returns an error if `extension` is not supported, or if the configuration
+/// cannot be serialized or written.
 pub fn add(
     servers: &mut Servers,
     new_server: Server,

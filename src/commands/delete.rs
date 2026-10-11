@@ -3,6 +3,13 @@ use std::path::PathBuf;
 
 use crate::models::Servers;
 
+/// Move `server` to the inactive servers, or remove it entirely when
+/// `permanently` is set, then save the configuration to `file_path`.
+///
+/// # Errors
+///
+/// Returns an error if `extension` is not supported, or if the configuration
+/// cannot be serialized or written.
 pub fn delete(
     servers: &mut Servers,
     permanently: bool,
@@ -10,21 +17,15 @@ pub fn delete(
     file_path: PathBuf,
     extension: &str,
 ) -> Result<()> {
-    let mut to_remove = servers.actives.iter().find(|s| s.name == *server);
-    if permanently && to_remove.is_none() {
-        to_remove = servers.inactives.iter().find(|s| s.name == *server);
-    }
-
-    let mut idx = servers.actives.iter().position(|s| s.name == *server);
-    if permanently && idx.is_none() {
-        idx = servers.inactives.iter().position(|s| s.name == *server);
-    }
-
-    if let (Some(to_remove), Some(idx)) = (to_remove, idx) {
+    if let Some(idx) = servers.actives.iter().position(|s| s.name == *server) {
+        let removed = servers.actives.remove(idx);
         if !permanently {
-            servers.inactives.push(to_remove.to_owned());
+            servers.inactives.push(removed);
         }
-        servers.actives.remove(idx);
+    } else if permanently
+        && let Some(idx) = servers.inactives.iter().position(|s| s.name == *server)
+    {
+        servers.inactives.remove(idx);
     }
 
     let content = match extension {

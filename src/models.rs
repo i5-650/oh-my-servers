@@ -13,11 +13,11 @@ pub struct Server {
     pub os: String,
     pub description: String,
     pub key_path: Option<String>,
-    pub password: Option<String>,
 }
 
 impl Server {
     #[allow(clippy::too_many_arguments)]
+    #[must_use]
     pub fn new(
         name: &String,
         host: &String,
@@ -26,7 +26,6 @@ impl Server {
         os: &String,
         description: Option<String>,
         key_path: Option<String>,
-        password: Option<String>,
     ) -> Self {
         Self {
             name: name.to_owned(),
@@ -36,13 +35,17 @@ impl Server {
             os: os.to_owned(),
             description: description.unwrap_or("No description".to_string()),
             key_path,
-            password,
         }
     }
 }
 
 impl Display for Server {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        let auth = self
+            .key_path
+            .as_ref()
+            .map_or("password".to_string(), |path| format!("ssh key {path}"));
+
         let output = format!(
             "{}\n\
              \tHost: {}\n\
@@ -50,16 +53,13 @@ impl Display for Server {
              \tUser: {}\n\
              \tOS: {}\n\
              \tDescription: {}\n\
-             \tPassword: {}\n\
-             \tKey Path: {}",
+             \tAuthentication: {auth}",
             self.name.underline(),
             self.host,
             self.port.unwrap_or(22),
             self.user,
             self.os,
-            self.description,
-            self.password.as_deref().unwrap_or("No password"),
-            self.key_path.as_deref().unwrap_or("No key"),
+            self.description
         );
 
         write!(f, "{output}")

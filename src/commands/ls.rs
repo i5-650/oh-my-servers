@@ -2,6 +2,11 @@ use crate::models::{Server, Servers};
 use anyhow::Result;
 use colored::Colorize;
 
+/// List the active servers, plus the inactive ones when `all` is set.
+///
+/// # Errors
+///
+/// Never fails; returns a `Result` like the other commands.
 pub fn ls(servers: &Servers, all: bool, long: bool) -> Result<()> {
     if all {
         println!("{}", "actives".green());
